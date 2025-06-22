@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  namespace: chandan
+spec:
+  volumes:
+  -  name: chandu
+     emptyDir:
+       medium: Memory
+       sizeLimit:	50Mi
+  containers:
+  -  volumeMounts:
+     -  mountPath: /home
+        name: chandu
+     image: nginx:latest
+     name: container1
+     ports:
+     -  containerPort: 80
+  
