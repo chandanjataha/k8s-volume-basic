@@ -11,7 +11,7 @@ What I changed:
 - Added `postStart` / `preStop` lifecycle hooks to initialize and drain gracefully.
 - Kept an `emptyDir` memory-backed volume with a conservative `sizeLimit` and a `ConfigMap` mount.
 
-**How to apply**
+How to apply
 Run:
 
 ```powershell
