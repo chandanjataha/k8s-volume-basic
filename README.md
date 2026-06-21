@@ -18,7 +18,7 @@ Run:
 kubectl apply -f pod.yaml
 ```
 
-**Notes & recommendations**
+Notes & recommendations
 - Replace the `ConfigMap` name `secure-nginx-config` with your actual configuration.
 - Consider adding a `NetworkPolicy` and `PodDisruptionBudget` for production.
 - For immutable security policies, use RBAC + admission controllers (e.g. PodSecurity, OPA Gatekeeper).
