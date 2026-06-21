@@ -2,7 +2,7 @@
 
 This workspace contains a hardened example Pod manifest and supporting notes.
 
-**What I changed**
+What I changed:
 - Replaced the simple `nginx-pod` with a hardened `secure-nginx` Pod in `pod.yaml`.
 - Added pod- and container-level `securityContext` settings (`runAsNonRoot`, `fsGroup`, seccomp).
 - Dropped Linux capabilities, disabled privilege escalation, and enforced a read-only root filesystem.
