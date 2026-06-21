@@ -1,20 +1,109 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nginx-pod
-  namespace: chandan
+  name: secure-nginx
+  namespace: ns-develop
+  labels:
+    app: secure-nginx
+  annotations:
+    container.apparmor.security.beta.kubernetes.io/container1: "runtime/default"
+    seccomp.security.alpha.kubernetes.io/pod: "runtime/default"
 spec:
+  # Pod-level security defaults
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+    seccompProfile:
+      type: RuntimeDefault
+  restartPolicy: Always
+  terminationGracePeriodSeconds: 30
+  dnsPolicy: ClusterFirst
   volumes:
-  -  name: chandu
-     emptyDir:
-       medium: Memory
-       sizeLimit:	50Mi
+    - name: dev-volume
+      emptyDir:
+        medium: Memory
+        sizeLimit: "50Mi"
+    - name: nginx-config
+      configMap:
+        name: secure-nginx-config
+    - name: tmp
+      emptyDir: {}
   containers:
-  -  volumeMounts:
-     -  mountPath: /home
-        name: chandu
-     image: nginx:latest
-     name: container1
-     ports:
-     -  containerPort: 80
+    - name: container1
+      image: nginx:1.25-alpine
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 80
+          name: http
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "64Mi"
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
+      env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+      volumeMounts:
+        - name: chandu
+          mountPath: /home
+          readOnly: false
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 3
+      readinessProbe:
+        httpGet:
+          path: /ready
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 5
+        timeoutSeconds: 2
+      startupProbe:
+        httpGet:
+          path: /startup
+          port: http
+        failureThreshold: 30
+        periodSeconds: 5
+      lifecycle:
+        postStart:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                # initialize minimal runtime directories and permissions
+                mkdir -p /home/run /home/logs || true
+                chown -R 1000:3000 /home || true
+        preStop:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                # allow in-flight requests to drain
+                sleep 5
   
